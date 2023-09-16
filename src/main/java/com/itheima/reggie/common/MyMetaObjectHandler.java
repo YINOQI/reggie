@@ -1,6 +1,7 @@
 package com.itheima.reggie.common;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.itheima.reggie.utils.BaseContext;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 

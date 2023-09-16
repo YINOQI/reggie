@@ -2,7 +2,7 @@ package com.itheima.reggie.filter;
 
 
 import com.alibaba.fastjson.JSON;
-import com.itheima.reggie.common.BaseContext;
+import com.itheima.reggie.utils.BaseContext;
 import com.itheima.reggie.common.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.AntPathMatcher;
@@ -33,7 +33,10 @@ public class LoginFilter implements Filter {
                 "/employee/login",
                 "/employee/logout",
                 "/backend/**",
-                "/front/**"
+                "/front/**",
+                "/common/**",
+                "/user/sendMsg",
+                "/user/login"
         };
 
         //2.判断本次请求是否需要处理
@@ -46,7 +49,7 @@ public class LoginFilter implements Filter {
             return;
         }
 
-        //4.判断登陆状态，如果已登录，则直接放行
+        //4.1判断登陆状态，如果已登录，则直接放行
         if (request.getSession().getAttribute("employee") != null){
             Long empId = (Long) request.getSession().getAttribute("employee");
             log.info("用户已登录，id为:{}",empId);
@@ -56,6 +59,15 @@ public class LoginFilter implements Filter {
             return;
         }
 
+        //4.2判断登陆状态，如果已登录，则直接放行
+        if (request.getSession().getAttribute("user") != null){
+            Long userId = (Long) request.getSession().getAttribute("user");
+            log.info("用户已登录，id为:{}",userId);
+
+            BaseContext.setCurrentId(userId);
+            filterChain.doFilter(request,response);
+            return;
+        }
         //5.如果未登录则返回未登录结果
         log.info("用户未登录...");
         response.getWriter().write(JSON.toJSONString(R.error("NOTLOGIN")));
