@@ -1,14 +1,19 @@
 package com.itheima.reggie.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.itheima.reggie.common.CustomException;
+import com.itheima.reggie.common.R;
+import com.itheima.reggie.dto.OrdersDto;
 import com.itheima.reggie.entity.*;
 import com.itheima.reggie.mapper.AddressBookMapper;
 import com.itheima.reggie.mapper.OrdersMapper;
 import com.itheima.reggie.service.*;
 import com.itheima.reggie.utils.BaseContext;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +48,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
      */
     @Override
     @Transactional
-    public void submit(Orders orders) {
+    public R<String> submit(Orders orders) {
         //获得当前用户id
         long currentId = BaseContext.getCurrentId();
 
@@ -108,5 +113,46 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
 
         //清空购物车数据
         shoppingCartService.remove(queryWrapper);
+
+        return R.success("提交订单成功");
+    }
+
+    @Override
+    public R<Page<OrdersDto>> getUserPage(int page, int pageSize) {
+        Page<Orders> orderPage = new Page<>(page, pageSize);
+        Page<OrdersDto> ordersDtoPage = new Page<>(page, pageSize);
+
+        this.page(orderPage);
+        BeanUtils.copyProperties(orderPage,ordersDtoPage,"records");
+
+        List<Orders> records = orderPage.getRecords();
+        List<OrdersDto> ordersDtoList = records.stream().map((item) ->{
+            OrdersDto ordersDto = new OrdersDto();
+            BeanUtils.copyProperties(item,ordersDto);
+            LambdaQueryWrapper<OrderDetail> orderDetailLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            orderDetailLambdaQueryWrapper.eq(OrderDetail::getId,item.getNumber());
+            List<OrderDetail> orderDetail = orderDetailService.list(orderDetailLambdaQueryWrapper);
+            ordersDto.setOrderDetails(orderDetail);
+            return ordersDto;
+        }).collect(Collectors.toList());
+
+        ordersDtoPage.setRecords(ordersDtoList);
+        return R.success(ordersDtoPage);
+    }
+
+    @Override
+    public R<Page<Orders>> getOrderPage(int page, int pageSize) {
+        Page<Orders> ordersPage = new Page<>(page,pageSize);
+        Page<Orders> orederPage = this.page(ordersPage);
+
+        return R.success(orederPage);
+    }
+
+    @Override
+    public R<String> updateStatus(Orders orders) {
+        LambdaUpdateWrapper<Orders> ordersLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        ordersLambdaUpdateWrapper.eq(Orders::getId,orders.getId()).set(Orders::getStatus,orders.getStatus());
+        this.update(ordersLambdaUpdateWrapper);
+        return R.success("修改状态成功");
     }
 }
