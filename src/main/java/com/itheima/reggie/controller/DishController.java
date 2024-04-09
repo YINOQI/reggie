@@ -30,15 +30,6 @@ public class DishController {
     @Autowired
     private DishService dishService;
 
-    @Autowired
-    private DishFlavorService dishFlavorService;
-
-    @Autowired
-    private CategoryService categoryService;
-
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
-
     /**
      * 新增菜品
      *
@@ -47,8 +38,8 @@ public class DishController {
      */
     @PostMapping
     public R<String> save(@RequestBody DishDto dishDto) {
-        dishService.saveWithFlavor(dishDto);
-        return R.success("新增信息成功");
+
+        return dishService.saveWithFlavor(dishDto);
     }
 
     /**
@@ -60,39 +51,8 @@ public class DishController {
      * @return
      */
     @GetMapping("/page")
-    public R<Page> page(int page, int pageSize, String name) {
-        Page<Dish> dishPage = new Page<>(page, pageSize);
-        Page<DishDto> dishDtoPage = new Page<>();
-
-
-        LambdaQueryWrapper<Dish> dishLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        dishLambdaQueryWrapper.like(name != null, Dish::getName, name);
-        dishLambdaQueryWrapper.orderByDesc(Dish::getUpdateTime);
-
-        dishService.page(dishPage, dishLambdaQueryWrapper);
-
-        BeanUtils.copyProperties(dishPage, dishDtoPage, "records");
-
-        List<Dish> dishRecords = dishPage.getRecords();
-        List<DishDto> dishDtos = dishRecords.stream().map((item) -> {
-            DishDto dishDto = new DishDto();
-
-            BeanUtils.copyProperties(item, dishDto);
-
-            Long categoryId = item.getCategoryId();
-
-            Category category = categoryService.getById(categoryId);
-
-            if (category != null) {
-                String categoryName = category.getName();
-                dishDto.setCategoryName(categoryName);
-            }
-
-            return dishDto;
-        }).collect(Collectors.toList());
-
-        dishDtoPage.setRecords(dishDtos);
-        return R.success(dishDtoPage);
+    public R<Page<DishDto>> page(int page, int pageSize, String name) {
+        return dishService.getDishPage(page,pageSize,name);
     }
 
     /**
@@ -103,9 +63,7 @@ public class DishController {
      */
     @GetMapping("/{id}")
     public R<DishDto> get(@PathVariable Long id) {
-        DishDto dishDto = dishService.getByIdWithFlavor(id);
-
-        return R.success(dishDto);
+        return dishService.getByIdWithFlavor(id);
     }
 
 
@@ -118,10 +76,7 @@ public class DishController {
     @PutMapping
     @Transactional
     public R<String> update(@RequestBody DishDto dishDto) {
-
-        dishService.updateWithFlavor(dishDto);
-
-        return R.success("更新信息成功");
+        return dishService.updateWithFlavor(dishDto);
     }
 
 
@@ -152,30 +107,8 @@ public class DishController {
      */
     @GetMapping("/list")
     public R<List<DishDto>> getList(Dish dish) {
-        LambdaQueryWrapper<Dish> wrapper = new LambdaQueryWrapper<>();
 
-        wrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
-        wrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
-        wrapper.eq(Dish::getStatus,1);
-
-        List<Dish> list = dishService.list(wrapper);
-
-        List<DishDto> dishDtoList = list.stream().map((item) -> {
-            DishDto dishDto = new DishDto();
-            BeanUtils.copyProperties(item, dishDto);
-
-            LambdaQueryWrapper<DishFlavor> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-
-            lambdaQueryWrapper.eq(DishFlavor::getDishId,item.getId());
-
-            List<DishFlavor> dishFlavorList = dishFlavorService.list(lambdaQueryWrapper);
-
-            dishDto.setFlavors(dishFlavorList);
-
-            return dishDto;
-        }).collect(Collectors.toList());
-
-        return R.success(dishDtoList);
+        return dishService.listDish(dish);
     }
 
 }
