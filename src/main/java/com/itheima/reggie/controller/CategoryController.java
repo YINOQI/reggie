@@ -42,16 +42,8 @@ public class CategoryController {
      * @return
      */
     @GetMapping("/page")
-    public R<Page> getCategoryPage(int page, int pageSize) {
-        Page<Category> categoryPage = new Page<>(page, pageSize);
-
-        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
-
-        queryWrapper.orderByAsc(Category::getSort);
-
-        categoryService.page(categoryPage, queryWrapper);
-
-        return R.success(categoryPage);
+    public R<Page<Category>> getCategoryPage(int page, int pageSize) {
+        return categoryService.getCategoryPage(page,pageSize);
     }
 
     /**
@@ -86,15 +78,6 @@ public class CategoryController {
      */
     @GetMapping("/list")
     public R<List<Category>> list(Category category) {
-        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
-
-        queryWrapper.eq(category.getType() != null, Category::getType, category.getType());
-
-        queryWrapper.orderByDesc(Category::getSort).orderByDesc(Category::getUpdateTime);
-
-        List<Category> list = categoryService.list(queryWrapper);
-
-        return R.success(list);
+        return categoryService.listCategory(category);
     }
-
 }
