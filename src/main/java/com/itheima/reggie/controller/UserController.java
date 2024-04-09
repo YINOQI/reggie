@@ -1,21 +1,31 @@
 package com.itheima.reggie.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.itheima.reggie.common.R;
+import com.itheima.reggie.dto.UserDto;
 import com.itheima.reggie.entity.User;
 import com.itheima.reggie.service.UserService;
-import com.itheima.reggie.utils.SMSUtils;
 import com.itheima.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static com.itheima.reggie.utils.RedisConstants.*;
+import static com.itheima.reggie.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 @Slf4j
 @RestController
@@ -24,30 +34,19 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
     /**
      * 发送验证码
      *
      * @param user
-     * @param session
      * @return
      */
     @PostMapping("/sendMsg")
-    public R<String> sendMsg(@RequestBody User user, HttpSession session) {
-        String phone = user.getPhone();
+    public R<String> sendMsg(@RequestBody User user) {
+        return userService.sendMsg(user);
 
-        if (StringUtils.isNotEmpty(phone)) {
-
-            String code = ValidateCodeUtils.generateValidateCode(4).toString();
-            log.info("code = {}", code);
-
-//            SMSUtils.sendMessage("瑞吉外卖",phone,code);
-
-            session.setAttribute(phone, code);
-
-            return R.success("验证码发送成功");
-        }
-
-        return R.error("验证码发送失败");
     }
 
 
@@ -58,32 +57,21 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public R<String> login(@RequestBody Map map, HttpSession session) {
-        //获取手机号和验证码
-        String phone = map.get("phone").toString();
-        String code = map.get("code").toString();
-
-        //获取session中的验证码
-        Object attribute = session.getAttribute(phone);
-
-        if (attribute != null && attribute.equals(code)) {
-            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(User::getPhone,phone);
-
-            User user = userService.getOne(wrapper);
-
-            if(user == null){
-                user = new User();
-                user.setPhone(phone);
-                user.setStatus(1);
-                userService.save(user);
-            }
-
-            session.setAttribute("user",user.getId());
-
-            return R.success("登陆成功");
-        }
-
-        return R.error("验证码错误");
+    public R<String> login(@RequestBody Map map) {
+        return userService.login(map);
     }
+
+    /**
+     * 退出登录
+     *
+     * @param request
+     * @return
+     */
+    @PostMapping("/loginout")
+    public R<String> loginout(HttpServletRequest request) {
+
+        return userService.loginout(request);
+    }
+
+
 }

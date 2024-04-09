@@ -12,6 +12,7 @@ import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,9 @@ public class DishController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 新增菜品
@@ -59,6 +63,7 @@ public class DishController {
     public R<Page> page(int page, int pageSize, String name) {
         Page<Dish> dishPage = new Page<>(page, pageSize);
         Page<DishDto> dishDtoPage = new Page<>();
+
 
         LambdaQueryWrapper<Dish> dishLambdaQueryWrapper = new LambdaQueryWrapper<>();
         dishLambdaQueryWrapper.like(name != null, Dish::getName, name);
@@ -87,7 +92,6 @@ public class DishController {
         }).collect(Collectors.toList());
 
         dishDtoPage.setRecords(dishDtos);
-
         return R.success(dishDtoPage);
     }
 

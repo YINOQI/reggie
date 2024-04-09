@@ -5,9 +5,9 @@ import com.itheima.reggie.common.R;
 import com.itheima.reggie.entity.ShoppingCart;
 import com.itheima.reggie.service.ShoppingCartService;
 import com.itheima.reggie.utils.BaseContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,8 +15,8 @@ import java.util.List;
 @RequestMapping("shoppingCart")
 public class ShoppingCartController {
 
-    @Autowired
-    ShoppingCartService shoppingCartService;
+    @Resource
+    private ShoppingCartService shoppingCartService;
 
     /**
      * 添加购物车
@@ -34,13 +34,12 @@ public class ShoppingCartController {
         shoppingCart.setUserId(currentId);
         shoppingCart.setCreateTime(LocalDateTime.now());
 
-        shoppingCartLambdaQueryWrapper.eq(ShoppingCart::getUserId, currentId);
+        shoppingCartLambdaQueryWrapper.eq(ShoppingCart::getUserId, shoppingCart.getUserId());
         if (dishId != null) {
             shoppingCartLambdaQueryWrapper.eq(ShoppingCart::getDishId, dishId);
         } else {
             shoppingCartLambdaQueryWrapper.eq(ShoppingCart::getSetmealId, shoppingCart.getSetmealId());
         }
-
         ShoppingCart shoppingCartOne = shoppingCartService.getOne(shoppingCartLambdaQueryWrapper);
         if (shoppingCartOne != null) {
             shoppingCartOne.setNumber(shoppingCartOne.getNumber() + 1);

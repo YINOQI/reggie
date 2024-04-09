@@ -9,9 +9,7 @@ import com.itheima.reggie.service.AddressBookService;
 import com.itheima.reggie.service.ShoppingCartService;
 import org.springframework.stereotype.Service;
 
-/**
- * 全局异常处理器
- */
+
 @Service
 public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, ShoppingCart> implements ShoppingCartService {
 }

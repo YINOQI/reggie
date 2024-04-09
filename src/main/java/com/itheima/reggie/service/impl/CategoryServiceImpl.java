@@ -13,9 +13,7 @@ import com.itheima.reggie.service.SetmealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * 全局异常处理器
- */
+
 @Service
 public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> implements CategoryService {
     @Autowired
@@ -30,7 +28,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      * @param id
      */
     @Override
-    public void remove(Long id) {
+    public boolean remove(Long id) {
         //添加查询条件，根据id进行查询
         LambdaQueryWrapper<Dish> dishQueryWrapper = new LambdaQueryWrapper<>();
         dishQueryWrapper.eq(Dish::getCategoryId, id);
@@ -48,5 +46,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         }
 
         super.removeById(id);
+
+        return true;
     }
 }
