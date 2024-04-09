@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @WebFilter(filterName = "loginFilter", urlPatterns = "/*")
 @Slf4j
@@ -123,8 +124,12 @@ public class LoginFilter implements Filter {
             // 判断登陆状态，如果已登录，则直接放行
             if (!userMap.isEmpty()) {
                 log.info("用户已登录，id为:{}", userMap.get("id"));
+
                 String id = (String)userMap.get("id");
                 BaseContext.setCurrentId(Long.parseLong(id));
+
+                stringRedisTemplate.expire(key,30L, TimeUnit.MINUTES);
+
                 filterChain.doFilter(request, response);
                 return;
             }
