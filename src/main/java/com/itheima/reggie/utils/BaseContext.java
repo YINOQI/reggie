@@ -18,7 +18,7 @@ public class BaseContext {
     /**
      * 获取当前登录用户id
      */
-    public static long getCurrentId(){
+    public static Long getCurrentId(){
         return threadLocal.get();
     }
 }
