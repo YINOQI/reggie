@@ -13,7 +13,7 @@ public interface EmployeeService extends IService<Employee> {
 
     R<String> logout(HttpServletRequest request);
 
-    R<Page<Employee>> employeePage(int page, int pageSize, String name);
+    R<Page<Employee>> getEmployeePage(int page, int pageSize, String name);
 
     R<String> saveEmployee(Employee employee);
 

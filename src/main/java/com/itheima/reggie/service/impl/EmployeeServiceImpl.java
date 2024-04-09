@@ -80,7 +80,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     }
 
     @Override
-    public R<Page<Employee>> employeePage(int page, int pageSize, String name) {
+    public R<Page<Employee>> getEmployeePage(int page, int pageSize, String name) {
         //构造分页构造器
         Page<Employee> employeePage = new Page<>(page,pageSize);
 

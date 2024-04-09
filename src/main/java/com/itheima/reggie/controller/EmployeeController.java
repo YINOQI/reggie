@@ -64,8 +64,8 @@ public class EmployeeController {
      * @return
      */
     @GetMapping("/page")
-    public R<Page<Employee>> page(int page, int pageSize, String name) {
-        return employeeService.employeePage(page, pageSize, name);
+    public R<Page<Employee>> getEmployeePage(int page, int pageSize, String name) {
+        return employeeService.getEmployeePage(page, pageSize, name);
     }
 
     /**
