@@ -9,8 +9,7 @@ import com.itheima.reggie.common.CustomException;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.OrdersDto;
 import com.itheima.reggie.entity.*;
-import com.itheima.reggie.mapper.AddressBookMapper;
-import com.itheima.reggie.mapper.OrdersMapper;
+import com.itheima.reggie.mapper.*;
 import com.itheima.reggie.service.*;
 import com.itheima.reggie.utils.BaseContext;
 import org.springframework.beans.BeanUtils;
@@ -31,16 +30,16 @@ import java.util.stream.Collectors;
 public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> implements OrdersService {
 
     @Autowired
-    private ShoppingCartService shoppingCartService;
+    private ShoppingCartMapper shoppingCartMapper;
 
     @Autowired
-    private UserService userService;
+    private UserMapper userMapper;
 
     @Autowired
-    private AddressBookService addressBookService;
+    private AddressBookMapper addressBookMapper;
 
     @Autowired
-    private OrderDetailService orderDetailService;
+    private OrderDetailMapper orderDetailMapper;
 
     /**
      * 用户下单
@@ -55,18 +54,18 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         //查询当前用户的购物车数据
         LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ShoppingCart::getUserId,currentId);
-        List<ShoppingCart> shoppingCartList = shoppingCartService.list(queryWrapper);
+        List<ShoppingCart> shoppingCartList = shoppingCartMapper.selectList(queryWrapper);
 
         if(shoppingCartList == null || shoppingCartList.size() == 0){
             throw new CustomException("购物车为空，不能下单");
         }
 
         //查询用户数据
-        User user = userService.getById(currentId);
+        User user = userMapper.selectById(currentId);
 
         //查询地址数据
         Long addressBookId = orders.getAddressBookId();
-        AddressBook addressBook = addressBookService.getById(addressBookId);
+        AddressBook addressBook = addressBookMapper.selectById(addressBookId);
         if(addressBook == null){
             throw new CustomException("地址信息为空，不能下单");
         }
@@ -109,10 +108,10 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         this.save(orders);
 
         //保存订单详细信息
-        orderDetailService.saveBatch(orderDetails);
+        orderDetailMapper.selectBatchIds(orderDetails);
 
         //清空购物车数据
-        shoppingCartService.remove(queryWrapper);
+        shoppingCartMapper.delete(queryWrapper);
 
         return R.success("提交订单成功");
     }
@@ -122,17 +121,17 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         Page<Orders> orderPage = new Page<>(page, pageSize);
         Page<OrdersDto> ordersDtoPage = new Page<>(page, pageSize);
 
-        this.page(orderPage);
+        this.page(orderPage, new LambdaQueryWrapper<Orders>().orderByDesc(Orders::getOrderTime));
         BeanUtils.copyProperties(orderPage,ordersDtoPage,"records");
 
         List<Orders> records = orderPage.getRecords();
         List<OrdersDto> ordersDtoList = records.stream().map((item) ->{
             OrdersDto ordersDto = new OrdersDto();
             BeanUtils.copyProperties(item,ordersDto);
-            LambdaQueryWrapper<OrderDetail> orderDetailLambdaQueryWrapper = new LambdaQueryWrapper<>();
-            orderDetailLambdaQueryWrapper.eq(OrderDetail::getId,item.getNumber());
-            List<OrderDetail> orderDetail = orderDetailService.list(orderDetailLambdaQueryWrapper);
+
+            List<OrderDetail> orderDetail = orderDetailMapper.selectList(new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getId,item.getNumber()));
             ordersDto.setOrderDetails(orderDetail);
+
             return ordersDto;
         }).collect(Collectors.toList());
 
