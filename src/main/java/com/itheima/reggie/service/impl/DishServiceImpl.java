@@ -8,8 +8,8 @@ import com.itheima.reggie.dto.DishDto;
 import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.entity.DishFlavor;
+import com.itheima.reggie.mapper.CategoryMapper;
 import com.itheima.reggie.mapper.DishMapper;
-import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
 import org.springframework.beans.BeanUtils;
@@ -27,7 +27,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     private DishFlavorService dishFlavorService;
 
     @Autowired
-    private CategoryService categoryService;
+    private CategoryMapper categoryMapper;
 
     /**
      * 新增菜品，同时保存对应的口味数据
@@ -115,7 +115,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
             Long categoryId = item.getCategoryId();
 
-            Category category = categoryService.getById(categoryId);
+            Category category = categoryMapper.selectById(categoryId);
 
             if (category != null) {
                 String categoryName = category.getName();

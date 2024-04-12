@@ -10,6 +10,7 @@ import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.entity.Setmeal;
 import com.itheima.reggie.entity.SetmealDish;
+import com.itheima.reggie.mapper.CategoryMapper;
 import com.itheima.reggie.mapper.SetmealMapper;
 import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.SetmealDishService;
@@ -29,7 +30,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
     private SetmealDishService setmealDishService;
 
     @Autowired
-    private CategoryService categoryService;
+    private CategoryMapper categoryMapper;
 
     /**
      * 新增套餐，同时保存套餐和菜品的关联关系
@@ -112,7 +113,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
         BeanUtils.copyProperties(setmeal,setmealDto);
         setmealDto.setSetmealDishes(list);
 
-        Category category = categoryService.getById(setmeal.getCategoryId());
+        Category category = categoryMapper.selectById(setmeal.getCategoryId());
 
         setmealDto.setCategoryName(category.getName());
 
@@ -137,7 +138,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper, Setmeal> impl
 
             BeanUtils.copyProperties(item,setmealDto);
 
-            Category categoryName = categoryService.getById(item.getCategoryId());
+            Category categoryName = categoryMapper.selectById(item.getCategoryId());
             setmealDto.setCategoryName(categoryName.getName());
 
             return setmealDto;
