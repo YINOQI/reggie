@@ -3,6 +3,7 @@ package com.itheima.reggie.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -42,7 +43,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 //            SMSUtils.sendMessage("瑞吉外卖",phone,code);
 
-//            session.setAttribute(phone, code);
             stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + user.getPhone(),code,LOGIN_CODE_TTL, TimeUnit.MINUTES);
             return R.success("验证码发送成功");
         }
@@ -55,8 +55,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String phone = map.get("phone").toString();
         String code = map.get("code").toString();
 
-        //获取session中的验证码
-//        Object attribute = session.getAttribute(phone);
         String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
         if (cacheCode != null && cacheCode.equals(code)) {
             LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -73,7 +71,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
 
             String token = UUID.randomUUID(true).toString();
-//            session.setAttribute("user",user.getId());
+
             UserDto userDto = BeanUtil.copyProperties(user, UserDto.class);
             Map<String, Object> userMap = BeanUtil.beanToMap(userDto, new HashMap<>(),
                     CopyOptions.create()
@@ -82,6 +80,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
             stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, userMap);
             stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
+
             return R.success(token);
         }
 
@@ -93,5 +92,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String token = request.getHeader("authorization");
         stringRedisTemplate.delete(LOGIN_USER_KEY + token);
         return R.success("退出成功");
+    }
+
+    @Override
+    public R<UserDto> getUser(HttpServletRequest request) {
+        String token = request.getHeader("authorization");
+        String key = LOGIN_USER_KEY + token;
+        Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(key);
+        if (MapUtil.isNotEmpty(entries)) {
+            UserDto userDto = BeanUtil.mapToBean(entries, UserDto.class,
+                    true,
+                    CopyOptions.create()
+                            .setIgnoreNullValue(true));
+            return R.success(userDto);
+        }
+        return R.error("用户信息不存在");
     }
 }
