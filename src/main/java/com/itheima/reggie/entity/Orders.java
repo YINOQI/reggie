@@ -25,6 +25,9 @@ public class Orders implements Serializable {
     //下单用户id
     private Long userId;
 
+    //优惠券id
+    private Long voucherId;
+
     //地址id
     private Long addressBookId;
 
