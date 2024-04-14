@@ -39,7 +39,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     private AddressBookMapper addressBookMapper;
 
     @Autowired
-    private OrderDetailMapper orderDetailMapper;
+    private OrderDetailService orderDetailService;
 
     /**
      * 用户下单
@@ -108,7 +108,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         this.save(orders);
 
         //保存订单详细信息
-        orderDetailMapper.selectBatchIds(orderDetails);
+        orderDetailService.saveBatch(orderDetails);
 
         //清空购物车数据
         shoppingCartMapper.delete(queryWrapper);
@@ -129,7 +129,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
             OrdersDto ordersDto = new OrdersDto();
             BeanUtils.copyProperties(item,ordersDto);
 
-            List<OrderDetail> orderDetail = orderDetailMapper.selectList(new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getId,item.getNumber()));
+            List<OrderDetail> orderDetail = orderDetailService.list(new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getId,item.getNumber()));
             ordersDto.setOrderDetails(orderDetail);
 
             return ordersDto;
