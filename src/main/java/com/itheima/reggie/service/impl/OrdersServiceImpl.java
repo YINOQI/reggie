@@ -41,8 +41,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     @Autowired
     private OrderDetailService orderDetailService;
 
+    @Autowired
+    private VoucherOrderService voucherOrderService;
+
     /**
      * 用户下单
+     *
      * @param orders
      */
     @Override
@@ -53,11 +57,11 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
 
         //查询当前用户的购物车数据
         LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ShoppingCart::getUserId,currentId);
+        queryWrapper.eq(ShoppingCart::getUserId, currentId);
         List<ShoppingCart> shoppingCartList = shoppingCartMapper.selectList(queryWrapper);
 
-        if(shoppingCartList == null || shoppingCartList.size() == 0){
-            throw new CustomException("购物车为空，不能下单");
+        if (shoppingCartList == null || shoppingCartList.size() == 0) {
+            throw new CustomException("购物车为空");
         }
 
         //查询用户数据
@@ -66,9 +70,23 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         //查询地址数据
         Long addressBookId = orders.getAddressBookId();
         AddressBook addressBook = addressBookMapper.selectById(addressBookId);
-        if(addressBook == null){
-            throw new CustomException("地址信息为空，不能下单");
+        if (addressBook == null) {
+            throw new CustomException("地址信息为空");
         }
+
+        // 判断是否使用优惠券
+        if (orders.getVoucherId() != null) {
+            // 判断优惠券是否过期
+            VoucherOrder voucherOrder = voucherOrderService.getById(orders.getVoucherId());
+            if (voucherOrder.getExpire_time() != null && voucherOrder.getExpire_time().isBefore(LocalDateTime.now())) {
+                throw new CustomException("该优惠券已过期");
+            }
+            // 判断优惠券是否已被使用
+            if (voucherOrder.getUseTime() != null) {
+                throw new CustomException("该优惠券已使用过");
+            }
+        }
+
 
         long orderId = IdWorker.getId();
 
@@ -110,6 +128,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         //保存订单详细信息
         orderDetailService.saveBatch(orderDetails);
 
+        //扣减优惠卷
+        LambdaUpdateWrapper<VoucherOrder> voucherOrderLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        voucherOrderLambdaUpdateWrapper.eq(orders.getVoucherId() != null, VoucherOrder::getId, orders.getVoucherId())
+                .set(VoucherOrder::getUseTime, LocalDateTime.now());
+        voucherOrderService.update(voucherOrderLambdaUpdateWrapper);
+
         //清空购物车数据
         shoppingCartMapper.delete(queryWrapper);
 
@@ -122,14 +146,14 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         Page<OrdersDto> ordersDtoPage = new Page<>(page, pageSize);
 
         this.page(orderPage, new LambdaQueryWrapper<Orders>().orderByDesc(Orders::getOrderTime));
-        BeanUtils.copyProperties(orderPage,ordersDtoPage,"records");
+        BeanUtils.copyProperties(orderPage, ordersDtoPage, "records");
 
         List<Orders> records = orderPage.getRecords();
-        List<OrdersDto> ordersDtoList = records.stream().map((item) ->{
+        List<OrdersDto> ordersDtoList = records.stream().map((item) -> {
             OrdersDto ordersDto = new OrdersDto();
-            BeanUtils.copyProperties(item,ordersDto);
+            BeanUtils.copyProperties(item, ordersDto);
 
-            List<OrderDetail> orderDetail = orderDetailService.list(new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getId,item.getNumber()));
+            List<OrderDetail> orderDetail = orderDetailService.list(new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getId, item.getNumber()));
             ordersDto.setOrderDetails(orderDetail);
 
             return ordersDto;
@@ -141,7 +165,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
 
     @Override
     public R<Page<Orders>> getOrderPage(int page, int pageSize) {
-        Page<Orders> ordersPage = new Page<>(page,pageSize);
+        Page<Orders> ordersPage = new Page<>(page, pageSize);
         Page<Orders> orederPage = this.page(ordersPage);
 
         return R.success(orederPage);
@@ -150,7 +174,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     @Override
     public R<String> updateStatus(Orders orders) {
         LambdaUpdateWrapper<Orders> ordersLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        ordersLambdaUpdateWrapper.eq(Orders::getId,orders.getId()).set(Orders::getStatus,orders.getStatus());
+        ordersLambdaUpdateWrapper.eq(Orders::getId, orders.getId()).set(Orders::getStatus, orders.getStatus());
         this.update(ordersLambdaUpdateWrapper);
         return R.success("修改状态成功");
     }
