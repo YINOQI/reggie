@@ -189,7 +189,8 @@
                         const params = {
                             remark:this.note,
                             payMethod:1,
-                            addressBookId:this.address.id
+                            addressBookId:this.address.id,
+                            voucherId:"1779411052968738817"
                         }
                         const res = await addOrderApi(params)
                         if(res.code === 1){

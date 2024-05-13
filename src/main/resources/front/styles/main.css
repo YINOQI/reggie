@@ -58,7 +58,10 @@
   line-height: 25rem;
 }
 
-#main .divTitle .divStatic .divDesc .divSend {
+
+#main .divTitle  .divSend {
+  margin-top: 5px;
+  margin-left: 50px;
   opacity: 1;
   font-size: 11rem;
   font-family: PingFangSC, PingFangSC-Regular;
@@ -68,19 +71,24 @@
   margin-bottom: 10rem;
 }
 
-#main .divTitle .divStatic .divDesc .divSend img {
+
+#main .divTitle   .divSend img {
   width: 14rem;
   height: 14rem;
   opacity: 1;
   vertical-align: sub;
 }
 
-#main .divTitle .divStatic .divDesc .divSend span {
+#main .divTitle  .divSend span {
   margin-right: 12rem;
 }
 
-#main .divTitle .divStatic .divDesc .divSend span:last-child {
+#main .divTitle  .divSend span:last-child {
   margin-right: 0;
+}
+
+.divSend {
+  padding-top: 0
 }
 
 #main .divTitle > .divDesc {
@@ -173,6 +181,7 @@
 }
 
 #main .divBody .divMenu .divItem .divName {
+  flex: 1;
   height: 22rem;
   opacity: 1;
   font-size: 16rem;
@@ -204,6 +213,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 144rem;
+}
+
+.divDesc {
+  display: flex;
+}
+
+.divVoucher {
+  margin-left: 180px;
 }
 
 #main .divBody .divMenu .divItem .divBottom {

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../plugins/element-ui/index.css"/>
+    <link rel="stylesheet" href="../../styles/common.css"/>
+    <link rel="stylesheet" href="../../styles/page.css"/>
+    <style>
+        .selectInput {
+            position: relative;
+            width: 100%;
+            min-width: 100px;
+        }
+
+        .selectInput .flavorSelect {
+            position: absolute;
+            width: 100%;
+            padding: 0 10px;
+            border-radius: 3px;
+            border: solid 1px #FF903D;
+            line-height: 30px;
+            text-align: center;
+            background: #fff;
+            top: 50px;
+            z-index: 99;
+        }
+
+        .selectInput .flavorSelect .items {
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+            line-height: 35px;
+            border-bottom: solid 1px #f4f4f4;
+            color: #666;
+        }
+
+        .selectInput .flavorSelect .none {
+            font-size: 14px;
+        }
+
+        #food-add-app .uploadImg .el-form-item__label::before {
+            content: '*';
+            color: #F56C6C;
+            margin-right: 4px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="addBrand-container" id="voucher-add-app">
+    <div class="container">
+        <el-form ref="ruleForm" :model="ruleForm" :rules="rules" :inline="true" label-width="180px"
+                 class="demo-ruleForm">
+            <div>
+                <el-form-item label="优惠券名称:" prop="title">
+                    <el-input v-model="ruleForm.title" placeholder="请填写优惠券名称" maxlength="20"></el-input>
+                </el-form-item>
+
+                <el-form-item label="优惠券信息:" prop="subTitle">
+                    <el-input v-model="ruleForm.subTitle" placeholder="请填写优惠券信息">
+                        <el-option v-for="(item,index) in dishList" :key="index" :label="item.name"
+                                   :value="item.id"></el-option>
+                    </el-input>
+                </el-form-item>
+
+            </div>
+            <div>
+                <el-form-item label="优惠券数量:" prop="amount">
+                    <el-input v-model="ruleForm.amount" placeholder="请设置优惠券数量"></el-input>
+                </el-form-item>
+            </div>
+            <div>
+                <el-form-item label="请输入满足金额:" prop="actualValue">
+                    <el-input v-model="ruleForm.actualValue" placeholder="满足金额"></el-input>
+                </el-form-item>
+
+                <el-form-item label="请输入满减金额:" prop="payValue">
+                    <el-input v-model="ruleForm.payValue" placeholder="满减金额"></el-input>
+                </el-form-item>
+            </div>
+            <div>
+                <el-form-item label="请输入开始时间:" prop="beginTime">
+                    <el-date-picker v-model="ruleForm.time" type="datetimerange" range-separator="至"
+                                    start-placeholder="开始日期" end-placeholder="结束日期"
+                                    format="yyyy-MM-dd HH:mm"
+                                    :picker-options="pickerOptions"></el-date-picker>
+                </el-form-item>
+            </div>
+            <div class="subBox address">
+                <el-form-item>
+                    <el-button @click="goBack()">
+                        取消
+                    </el-button>
+                    <el-button type="primary" @click="submitForm('ruleForm')">
+                        保存
+                    </el-button>
+                    <el-button v-if="actionType == 'add'" type="primary" class="continue"
+                               @click="submitForm('ruleForm','goAnd')">
+                        保存并继续添加
+                    </el-button>
+                </el-form-item>
+            </div>
+        </el-form>
+    </div>
+</div>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../plugins/axios/axios.min.js"></script>
+<script src="../../js/request.js"></script>
+<script src="../../js/validate.js"></script>
+<script src="../../js/index.js"></script>
+<script src="../../api/voucher.js"></script>
+<script>
+    new Vue({
+        el: '#voucher-add-app',
+        data() {
+            return {
+                id: '',
+                restKey: 0,
+                textarea: '',
+                value: '',
+                imageUrl: '',
+                actionType: '',
+                dishList: [],
+                dishFlavorsData: [],
+                dishFlavors: [],
+                vueRest: '1',
+                index: 0,
+                inputStyle: {'flex': 1},
+                ruleForm: {
+                    'title': '',
+                    'subTitle': '',
+                    'amount': '',
+                    'rules': '',
+                    'payValue': '',
+                    'actualValue': '',
+                    'type': [],
+                    'status': 1,
+                    'beginTime': '',
+                    'expireTime': '',
+                    'time': [new Date().getTime(), new Date().getTime() + 3600 * 1000 * 24]
+                },
+                pickerOptions: {
+                    shortcuts: [
+                        {
+                            text: '一周',
+                            onClick(picker) {
+                                const end = new Date();
+                                const start = new Date();
+                                start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                                picker.$emit('pick', [start, end]);
+                            }
+                        },
+                        {
+                            text: '一个月',
+                            onClick(picker) {
+                                const end = new Date();
+                                const start = new Date();
+                                start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                                picker.$emit('pick', [start, end]);
+                            }
+                        },
+                    ]
+                },
+                mak: false
+            }
+        },
+        computed: {
+            rules() {
+                return {
+                    'time': [
+                        {'required': true, 'message': '请填写时间', 'trigger': 'blur'}
+                    ],
+                    'title': [
+                        {'required': true, 'message': '请填写优惠券名称', 'trigger': 'blur'}
+                    ],
+                    'subTitle': [
+                        {'required': true, 'message': '请填写优惠券内容', 'trigger': 'change'}
+                    ],
+                    'amount': [
+                        {
+                            'required': true,
+                            validator: (rules, value, callback) => {
+                                console.log(value)
+                                if (!value) {
+                                    callback(new Error('请填写数量'))
+                                } else {
+                                    const reg = /[1-9]\d*/
+                                    if (reg.test(value)) {
+                                        if (value < 10000) {
+                                            callback()
+                                        } else {
+                                            callback(new Error('数量小于10000'))
+                                        }
+                                    } else {
+                                        console.log(this.ruleForm.amount)
+                                        callback(new Error('数量只能为数字'))
+                                    }
+                                }
+                            },
+                            'trigger': 'blur'
+                        }
+                    ],
+                    'actualValue': [
+                        {
+                            'required': true,
+                            validator: (rules, value, callback) => {
+                                console.log(value)
+                                if (!value) {
+                                    callback(new Error('请输入金额'))
+                                } else {
+                                    const reg = /^\d+(\.\d{0,2})?$/
+                                    if (reg.test(value)) {
+                                        if (value < 10000) {
+                                            callback()
+                                        } else {
+                                            callback(new Error('数量小于10000'))
+                                        }
+                                    } else {
+                                        callback(new Error('数量只能为数字'))
+                                    }
+                                }
+                            },
+                            'trigger': 'blur'
+                        }
+                    ],
+                    'payValue': [
+                        {
+                            'required': true,
+                            validator: (rules, value, callback) => {
+                                console.log(value)
+                                if (!value) {
+                                    callback(new Error('请输入金额'))
+                                } else {
+                                    const reg = /^\d+(\.\d{0,2})?$/
+                                    if (reg.test(value)) {
+                                        if (value < 10000) {
+                                            callback()
+                                        } else {
+                                            callback(new Error('数量小于10000'))
+                                        }
+                                    } else {
+                                        callback(new Error('数量只能为数字'))
+                                    }
+                                }
+                            },
+                            'trigger': 'blur'
+                        }
+                    ],
+                }
+            }
+        },
+        created() {
+            this.id = requestUrlParam('id')
+            this.actionType = this.id ? 'edit' : 'add'
+        },
+        mounted() {
+        },
+        methods: {
+            // 格式化时间
+            pad(timeEl, total = 2, str = '0') {
+                return timeEl.toString().padStart(total, str)
+            },
+            formData(timer) {
+                const year = timer.getFullYear()
+                const month = timer.getMonth() + 1 // 由于月份从0开始，因此需加1
+                const day = timer.getDate()
+                const hour = timer.getHours()
+                const minute = timer.getMinutes()
+                const second = timer.getSeconds()
+                return `${this.pad(year, 4)}-${this.pad(month)}-${this.pad(day)} ${this.pad(hour)}:${this.pad(minute)}:${this.pad(second)}`
+            },
+
+            submitForm(formName, st) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        let params = {...this.ruleForm}
+
+                        params.beginTime = this.formData(new Date(this.ruleForm.time[0]))
+                        params.expireTime = this.formData(new Date(this.ruleForm.time[1]))
+                        console.log(params.beginTime)
+                        params.actualValue *= 100
+                        params.payValue *= 100
+                        if (this.actionType == 'add') {
+                            console.log(params)
+                            addVoucher(params).then(res => {
+                                if (res.code === 1) {
+                                    this.$message.success('添加成功！')
+                                    if (!st) {
+                                        this.goBack()
+                                    } else {
+                                        this.ruleForm = {
+                                            'title': '',
+                                            'subTitle': '',
+                                            'amount': '',
+                                            'rules': '',
+                                            'payValue': '',
+                                            'actualValue': '',
+                                            'type': [],
+                                            'status': 1,
+                                            'beginTime': '',
+                                            'expireTime': '',
+                                            'time': [new Date().getTime(), new Date().getTime() + 3600 * 1000 * 24]
+                                        }
+                                    }
+                                } else {
+                                    this.$message.error(res.msg || '操作失败')
+                                }
+                            }).catch(err => {
+                                this.$message.error('请求出错了：' + err)
+                            })
+                        }
+                    } else {
+                        return false
+                    }
+                })
+            },
+
+            goBack() {
+                window.parent.menuHandle({
+                    id: '7',
+                    url: '/backend/page/voucher/list.html',
+                    name: '优惠券管理'
+                }, false)
+            }
+        }
+    })
+</script>
+</body>
+</html>

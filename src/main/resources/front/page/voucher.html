@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <title>菩提阁</title>
+    <link rel="icon" href="./../images/favico.ico">
+    <!--不同屏幕尺寸根字体设置-->
+    <script src="./../js/base.js"></script>
+    <!--element-ui的样式-->
+    <link rel="stylesheet" href="../../backend/plugins/element-ui/index.css"/>
+    <link rel="stylesheet" href="../styles/element.css">
+    <!--引入vant样式-->
+    <link rel="stylesheet" href="../styles/vant.min.css"/>
+    <!-- 引入样式  -->
+    <link rel="stylesheet" href="../styles/index.css"/>
+    <!--本页面内容的样式-->
+    <link href="../styles/shop-detail.css" rel="stylesheet">
+</head>
+<body>
+<div id="voucher">
+    <div class="shop-voucher">
+        <div>
+            <span class="voucher-icon">券</span>
+            <span style="font-weight: bold;">代金券</span>
+        </div>
+        <div class="voucher-box" v-for="v in vouchers" :key="v.id"> <!-- v-if="!isEnd(v)" -->
+            <div class="voucher-circle">
+                <div class="voucher-b"></div>
+                <div class="voucher-b"></div>
+                <div class="voucher-b"></div>
+            </div>
+            <div class="voucher-left">
+                <div class="voucher-title">{{v.title}}</div>
+                <div class="voucher-subtitle">{{v.subTitle}}</div>
+                <div class="voucher-price">
+                    <div>￥ {{util.formatPrice(v.payValue)}}</div>
+                    <span>{{(v.payValue * 10) / v.actualValue}}折</span></div>
+            </div>
+            <div class="voucher-right">
+                <div v-if="v.type" class="seckill-box">
+                    <div class="voucher-btn" :class="{'disable-btn': isNotBegin(v) || v.stock < 1}" @click="seckill(v)">
+                        限时抢购
+                    </div>
+                    <div class="seckill-stock">剩余 <span>{{v.amount}}</span> 张</div>
+                    <div class="seckill-time">{{formatTime(v)}}</div>
+                </div>
+                <div class="voucher-btn" @click="seckill(v)">抢购</div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../backend/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../backend/plugins/element-ui/index.js"></script>
+<!-- 引入vant样式 -->
+<script src="./../js/vant.min.js"></script>
+<script src="./../api/address.js"></script>
+<!-- 引入axios -->
+<script src="../../backend/plugins/axios/axios.min.js"></script>
+<script src="./../js/request.js"></script>
+<script src="./../js/common.js"></script>
+<script src="./../api/main.js"></script>
+<!--<script src="./../api/order.js"></script>-->
+<script src="./../api/voucher.js"></script>
+<script>
+    new Vue({
+        el: "#voucher",
+        data() {
+            return {
+                util,
+                shop: {},
+                vouchers: [],
+                token: ''
+            }
+        },
+        created() {
+            // 获取参数
+            const shopId = util.getUrlParam("id");
+            // 查询酒店信息
+            // this.queryShopById(shopId);
+            // 查询优惠券信息
+            // this.queryVoucher(shopId);
+            this.getVouchers()
+        },
+        methods: {
+            // getUrlParam(name) {
+            //   let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            //   let r = window.location.search.substr(1).match(reg);
+            //   if (r != null) {
+            //     return decodeURI(r[2]);
+            //   }
+            //   return "";
+            // },
+
+            goBack() {
+                history.back();
+            },
+
+            // queryShopById(shopId) {
+            //   axios.get("/shop/" + shopId)
+            //           .then(({data}) => {
+            //             data.images = data.images.split(",")
+            //             this.shop = data
+            //           })
+            //           .catch(this.$message.error)
+            // },
+
+            // queryVoucher(shopId) {
+            //     axios.get("/voucher/list/" + shopId)
+            //         .then(({data}) => {
+            //             this.vouchers = data;
+            //         })
+            //         .catch(this.$message.error)
+            // },
+
+            async getVouchers() {
+                const res = await getVoucherApi();
+                if (res.code === 1) {
+                    this.vouchers = res.data;
+                    console.log(this.vouchers)
+                } else {
+                    this.$message.error(res.msg)
+                }
+            },
+
+            formatTime(v) {
+                let b = new Date(v.beginTime);
+                let e = new Date(v.endTime);
+                return b.getMonth() + 1 + "月" + b.getDate() + "日 "
+                    + b.getHours() + ":" + this.formatMinutes(b.getMinutes())
+                    + " ~ "/*  + e.getMonth() + 1 + "月" + e.getDate() + "日 " */
+                    + e.getHours() + ":" + this.formatMinutes(e.getMinutes());
+            },
+
+            formatMinutes(m) {
+                if (m < 10) m = "0" + m
+                return m;
+            },
+
+            isNotBegin(v) {
+                return new Date(v.beginTime).getTime() > new Date().getTime();
+            },
+
+            isEnd(v) {
+                return new Date(v.endTime).getTime() < new Date().getTime();
+            },
+
+            async seckill(v) {
+                const token = sessionStorage.getItem("token");
+                if (!token) {
+                    this.$message.error("请先登录")
+                    // 未登录，跳转
+                    setTimeout(() => {
+                        location.href = "/front/page/login.html"
+                    }, 200);
+                    return;
+                }
+
+                if (this.isNotBegin(v)) {
+                    this.$message.error("优惠券抢购尚未开始！")
+                    return;
+                }
+
+                if (this.isEnd(v)) {
+                    this.$message.error("优惠券抢购已经结束！")
+                    return;
+                }
+
+                if (v.amount < 1) {
+                    this.$message.error("库存不足，请刷新再试试！")
+                    return;
+                }
+
+                const id = v.id;
+
+                const res = await seckill(id)
+
+                if (res.code === 1) {
+                    // 抢购成功，这里输出订单id，支付功能TODO
+                    this.$message.success("领取成功")
+                } else {
+                    this.$message.error(res.msg)
+                }
+            }
+
+
+            //   // 秒杀抢购
+            //   axios.post("/voucher-order/seckill/" + id)
+            //           .then(({data}) => {
+            //             // 抢购成功，这里输出订单id，支付功能TODO
+            //             this.$message.success("抢购成功，订单id：" + data)
+            //           })
+            //           .catch(this.$message.error)
+            // }
+        }
+    })
+</script>
+</html>

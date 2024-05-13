@@ -29,7 +29,6 @@ public class DishController {
      */
     @PostMapping
     public R<String> save(@RequestBody DishDto dishDto) {
-
         return dishService.saveWithFlavor(dishDto);
     }
 
