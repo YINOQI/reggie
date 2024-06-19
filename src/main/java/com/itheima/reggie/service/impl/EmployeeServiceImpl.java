@@ -11,20 +11,24 @@ import com.itheima.reggie.dto.EmployeeDto;
 import com.itheima.reggie.entity.Employee;
 import com.itheima.reggie.mapper.EmployeeMapper;
 import com.itheima.reggie.service.EmployeeService;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.plugin.Intercepts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.itheima.reggie.utils.RedisConstants.LOGIN_USER_KEY;
 
 @Service
-public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> implements EmployeeService {
+public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> implements EmployeeService{
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
@@ -32,7 +36,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     public R<EmployeeDto> login(Employee employee) {
         //1.将页面提交的密码进行md5加密处理
         String password = employee.getPassword();
-        password = DigestUtils.md5DigestAsHex(password.getBytes());
+        password = DigestUtils.md5Hex(password.getBytes());
 
         //2.获取数据库中用户数据
         LambdaQueryWrapper<Employee> queryWrapper = new LambdaQueryWrapper<>();
@@ -93,12 +97,12 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         wrapper.orderByDesc(Employee::getUpdateTime);
 
         //执行查询
-        return R.success(this.page(employeePage,wrapper));
+        return R.success(this.page(employeePage, wrapper));
     }
 
     @Override
     public R<String> saveEmployee(Employee employee) {
-        employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
+        employee.setPassword(DigestUtils.md5Hex(employee.getPassword().getBytes()));
 
         this.save(employee);
 

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.reggie.mapper.ScheduledMapper">
+
+    <resultMap id="BaseResultMap" type="com.itheima.reggie.entity.Voucher">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="subTitle" column="sub_title" jdbcType="VARCHAR"/>
+        <result property="amount" column="amount" jdbcType="INTEGER"/>
+        <result property="rules" column="rules" jdbcType="VARCHAR"/>
+        <result property="payValue" column="pay_value" jdbcType="INTEGER"/>
+        <result property="actualValue" column="actual_value" jdbcType="INTEGER"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="beginTime" column="begin_time" jdbcType="TIMESTAMP"/>
+        <result property="expireTime" column="expire_time" jdbcType="TIMESTAMP"/>
+
+    </resultMap>
+    
+    <select id="statusUpdate" statementType="CALLABLE">
+        call update_status()
+    </select>
+
+    <select id="select"  resultMap="BaseResultMap" parameterType="java.lang.Long">
+        select * from tb_voucher where id = #{id}
+    </select>
+
+</mapper>

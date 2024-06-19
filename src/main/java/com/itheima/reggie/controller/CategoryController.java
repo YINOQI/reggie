@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 分类信息操作
  */
-@Slf4j
+
 @RestController
 @RequestMapping("/category")
 public class CategoryController {

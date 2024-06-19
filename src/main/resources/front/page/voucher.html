@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
-    <title>菩提阁</title>
+    <title>中餐餐厅</title>
     <link rel="icon" href="./../images/favico.ico">
     <!--不同屏幕尺寸根字体设置-->
     <script src="./../js/base.js"></script>
@@ -25,7 +25,29 @@
             <span class="voucher-icon">券</span>
             <span style="font-weight: bold;">代金券</span>
         </div>
-        <div class="voucher-box" v-for="v in vouchers" :key="v.id"> <!-- v-if="!isEnd(v)" -->
+<!--        <div class="voucher-box" v-for="v in vouchers" :key="v.id"> &lt;!&ndash; v-if="!isEnd(v)" &ndash;&gt;-->
+<!--            <div class="voucher-circle">-->
+<!--                <div class="voucher-b"></div>-->
+<!--            </div>-->
+<!--            <div class="voucher-left">-->
+<!--                <div class="voucher-title">{{v.title}}</div>-->
+<!--                <div class="voucher-subtitle">{{v.subTitle}}</div>-->
+<!--                <div class="voucher-price">-->
+<!--                    <div>￥ {{util.formatPrice(v.payValue)}}</div>-->
+<!--                    <span>{{(v.payValue * 10) / v.actualValue}}折</span></div>-->
+<!--            </div>-->
+<!--            <div class="voucher-right">-->
+<!--                <div  class="seckill-box">-->
+<!--                    <div class="voucher-btn" :class="{'disable-btn': isNotBegin(v) || v.amount < 1}" @click="seckill(v)">-->
+<!--                        限时抢购-->
+<!--                    </div>-->
+<!--                    <div class="seckill-stock">剩余 <span>{{v.amount}}</span> 张</div>-->
+<!--                    <div class="seckill-time">{{formatTime(v)}}</div>-->
+<!--                </div>-->
+<!--&lt;!&ndash;                <div class="voucher-btn" @click="seckill(v)">抢购</div>&ndash;&gt;-->
+<!--            </div>-->
+<!--        </div>-->
+        <div class="voucher-box" v-for="(v,index) in vouchers" :key="index"> <!-- v-if="!isEnd(v)" -->
             <div class="voucher-circle">
                 <div class="voucher-b"></div>
                 <div class="voucher-b"></div>
@@ -39,14 +61,14 @@
                     <span>{{(v.payValue * 10) / v.actualValue}}折</span></div>
             </div>
             <div class="voucher-right">
-                <div v-if="v.type" class="seckill-box">
-                    <div class="voucher-btn" :class="{'disable-btn': isNotBegin(v) || v.stock < 1}" @click="seckill(v)">
+                <div  class="seckill-box">
+                    <div class="voucher-btn" :class="{'disable-btn': isNotBegin(v) || v.amount < 1}" @click="seckill(v)">
                         限时抢购
                     </div>
                     <div class="seckill-stock">剩余 <span>{{v.amount}}</span> 张</div>
                     <div class="seckill-time">{{formatTime(v)}}</div>
                 </div>
-                <div class="voucher-btn" @click="seckill(v)">抢购</div>
+                <!--                <div class="voucher-btn" @click="seckill(v)">抢购</div>-->
             </div>
         </div>
     </div>
@@ -64,7 +86,6 @@
 <script src="./../js/request.js"></script>
 <script src="./../js/common.js"></script>
 <script src="./../api/main.js"></script>
-<!--<script src="./../api/order.js"></script>-->
 <script src="./../api/voucher.js"></script>
 <script>
     new Vue({
@@ -78,44 +99,13 @@
             }
         },
         created() {
-            // 获取参数
             const shopId = util.getUrlParam("id");
-            // 查询酒店信息
-            // this.queryShopById(shopId);
-            // 查询优惠券信息
-            // this.queryVoucher(shopId);
             this.getVouchers()
         },
         methods: {
-            // getUrlParam(name) {
-            //   let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-            //   let r = window.location.search.substr(1).match(reg);
-            //   if (r != null) {
-            //     return decodeURI(r[2]);
-            //   }
-            //   return "";
-            // },
-
             goBack() {
                 history.back();
             },
-
-            // queryShopById(shopId) {
-            //   axios.get("/shop/" + shopId)
-            //           .then(({data}) => {
-            //             data.images = data.images.split(",")
-            //             this.shop = data
-            //           })
-            //           .catch(this.$message.error)
-            // },
-
-            // queryVoucher(shopId) {
-            //     axios.get("/voucher/list/" + shopId)
-            //         .then(({data}) => {
-            //             this.vouchers = data;
-            //         })
-            //         .catch(this.$message.error)
-            // },
 
             async getVouchers() {
                 const res = await getVoucherApi();
@@ -129,10 +119,10 @@
 
             formatTime(v) {
                 let b = new Date(v.beginTime);
-                let e = new Date(v.endTime);
+                let e = new Date(v.expireTime);
                 return b.getMonth() + 1 + "月" + b.getDate() + "日 "
                     + b.getHours() + ":" + this.formatMinutes(b.getMinutes())
-                    + " ~ "/*  + e.getMonth() + 1 + "月" + e.getDate() + "日 " */
+                    + " ~ "  + (e.getMonth() + 1) + "月" + e.getDate() + "日 "
                     + e.getHours() + ":" + this.formatMinutes(e.getMinutes());
             },
 
@@ -146,7 +136,7 @@
             },
 
             isEnd(v) {
-                return new Date(v.endTime).getTime() < new Date().getTime();
+                return new Date(v.expireTime).getTime() < new Date().getTime();
             },
 
             async seckill(v) {
@@ -181,7 +171,8 @@
 
                 if (res.code === 1) {
                     // 抢购成功，这里输出订单id，支付功能TODO
-                    this.$message.success("领取成功")
+                    this.$message.success("领取成功");
+                    await this.getVouchers()
                 } else {
                     this.$message.error(res.msg)
                 }

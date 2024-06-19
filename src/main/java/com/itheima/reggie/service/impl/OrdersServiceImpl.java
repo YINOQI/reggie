@@ -28,10 +28,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> implements OrdersService {
-
-    @Autowired
-    private ShoppingCartMapper shoppingCartMapper;
-
     @Autowired
     private UserMapper userMapper;
 
@@ -44,6 +40,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
     @Autowired
     private VoucherOrderService voucherOrderService;
 
+    @Autowired
+    private ShoppingCartService shoppingCartService;
+
     /**
      * 用户下单
      *
@@ -55,10 +54,12 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         //获得当前用户id
         long currentId = BaseContext.getCurrentId();
 
-        //查询当前用户的购物车数据
-        LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ShoppingCart::getUserId, currentId);
-        List<ShoppingCart> shoppingCartList = shoppingCartMapper.selectList(queryWrapper);
+        List<ShoppingCart> shoppingCartList = shoppingCartService.listShoppingCart();
+
+//        //查询当前用户的购物车数据
+//        LambdaQueryWrapper<ShoppingCart> queryWrapper = new LambdaQueryWrapper<>();
+//        queryWrapper.eq(ShoppingCart::getUserId, currentId);
+//        List<ShoppingCart> shoppingCartList = shoppingCartMapper.selectList(queryWrapper);
 
         if (shoppingCartList == null || shoppingCartList.size() == 0) {
             throw new CustomException("购物车为空");
@@ -74,10 +75,15 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
             throw new CustomException("地址信息为空");
         }
 
+        VoucherOrder voucherOrder = null;
+
         // 判断是否使用优惠券
         if (orders.getVoucherId() != null) {
+            LambdaQueryWrapper<VoucherOrder> voucherOrderLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            voucherOrderLambdaQueryWrapper.eq(VoucherOrder::getUserId,currentId).eq(VoucherOrder::getVoucherId,orders.getVoucherId());
+
             // 判断优惠券是否过期
-            VoucherOrder voucherOrder = voucherOrderService.getById(orders.getVoucherId());
+            voucherOrder = voucherOrderService.getOne(voucherOrderLambdaQueryWrapper);
             if (voucherOrder.getExpire_time() != null && voucherOrder.getExpire_time().isBefore(LocalDateTime.now())) {
                 throw new CustomException("该优惠券已过期");
             }
@@ -85,8 +91,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
             if (voucherOrder.getUseTime() != null) {
                 throw new CustomException("该优惠券已使用过");
             }
-        }
 
+            voucherOrder.setUseTime(LocalDateTime.now());
+        }
 
         long orderId = IdWorker.getId();
 
@@ -129,23 +136,30 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         orderDetailService.saveBatch(orderDetails);
 
         //扣减优惠卷
-        LambdaUpdateWrapper<VoucherOrder> voucherOrderLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        voucherOrderLambdaUpdateWrapper.eq(orders.getVoucherId() != null, VoucherOrder::getId, orders.getVoucherId())
-                .set(VoucherOrder::getUseTime, LocalDateTime.now());
-        voucherOrderService.update(voucherOrderLambdaUpdateWrapper);
+        if (voucherOrder != null) {
+            voucherOrderService.updateById(voucherOrder);
+        }
+//        LambdaUpdateWrapper<VoucherOrder> voucherOrderLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+//        voucherOrderLambdaUpdateWrapper.eq(orders.getVoucherId() != null, VoucherOrder::getId, orders.getVoucherId())
+//                .eq(VoucherOrder::getUserId,currentId)
+//                .set(VoucherOrder::getUseTime, LocalDateTime.now());
+//        voucherOrderService.update(voucherOrderLambdaUpdateWrapper);
 
         //清空购物车数据
-        shoppingCartMapper.delete(queryWrapper);
+        shoppingCartService.clear();
 
         return R.success("提交订单成功");
     }
 
     @Override
     public R<Page<OrdersDto>> getUserPage(int page, int pageSize) {
+        //获得当前用户id
+        long currentId = BaseContext.getCurrentId();
+
         Page<Orders> orderPage = new Page<>(page, pageSize);
         Page<OrdersDto> ordersDtoPage = new Page<>(page, pageSize);
 
-        this.page(orderPage, new LambdaQueryWrapper<Orders>().orderByDesc(Orders::getOrderTime));
+        this.page(orderPage, new LambdaQueryWrapper<Orders>().orderByDesc(Orders::getOrderTime).eq(Orders::getUserId,currentId));
         BeanUtils.copyProperties(orderPage, ordersDtoPage, "records");
 
         List<Orders> records = orderPage.getRecords();

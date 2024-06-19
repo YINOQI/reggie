@@ -3,17 +3,20 @@ package com.itheima.reggie.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.itheima.reggie.common.CustomException;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.DishDto;
 import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.entity.DishFlavor;
+import com.itheima.reggie.entity.Setmeal;
 import com.itheima.reggie.mapper.CategoryMapper;
 import com.itheima.reggie.mapper.DishMapper;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     @Autowired
     private CategoryMapper categoryMapper;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 新增菜品，同时保存对应的口味数据
@@ -155,5 +161,10 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             return dishDto;
         }).collect(Collectors.toList());
         return R.success(dishDtoList);
+    }
+
+    @Override
+    public void remove(Long id) {
+        super.removeById(id);
     }
 }

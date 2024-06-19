@@ -1,212 +1,387 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
-        <title>菩提阁</title>
-        <link rel="icon" href="./../images/favico.ico">
-        <!--不同屏幕尺寸根字体设置-->
-        <script src="./../js/base.js"></script>
-        <!--element-ui的样式-->
-        <link rel="stylesheet" href="../../backend/plugins/element-ui/index.css" />
-        <!--引入vant样式-->
-        <link rel="stylesheet" href="../styles/vant.min.css"/>
-        <!-- 引入样式  -->
-        <link rel="stylesheet" href="../styles/index.css" />
-        <!--本页面内容的样式-->
-        <link rel="stylesheet" href="./../styles/add-order.css" />
-    </head>
-    <body>
-        <div id="add_order" class="app">
-            <div class="divHead">
-                <div class="divTitle">
-                    <i class="el-icon-arrow-left" @click="goBack"></i>菩提阁
-                </div>
-            </div>
-            <div class="divContent">
-                <div class="divAddress">
-                    <div @click="toAddressPage">                    
-                        <div class="address">{{address.detail}}</div>
-                        <div class="name">
-                            <span>{{address.consignee}}{{address.sex === '1' ? '先生':'女士'}}</span>
-                            <span>{{address.phone}}</span>
-                        </div>
-                        <i class="el-icon-arrow-right"></i>
-                    </div>
-                    <div class="divSplit"></div>
-                    <div class="divFinishTime">预计{{finishTime}}送达</div>
-                </div>
-                <div class="order">
-                    <div class="title">订单明细</div>
-                    <div class="divSplit"></div>
-                    <div class="itemList">
-                        <div class="item" v-for="(item,index) in cartData" :key="index">
-                            <el-image :src="imgPathConvert(item.image)">
-                                <div slot="error" class="image-slot">
-                                    <img src="./../images/noImg.png"/>
-                                </div>
-                            </el-image>
-                            <div class="desc">
-                                <div class="name">{{item.name}}</div>
-                                <div class="numPrice">
-                                    <span class="num">x{{item.number}}</span>
-                                    <div class="price">
-                                        <span class="spanMoney">￥</span>{{item.amount}}</div>
-                                    </div>
-                                </div>
-                            </div>
-                    </div>
-                </div>
-                <div class="note">
-                    <div class="title">备注</div>
-                    <van-field
-                        v-model="note"
-                        rows="2"
-                        autosize
-                        type="textarea"
-                        maxlength="50"
-                        placeholder="请输入您需要备注的信息"
-                        show-word-limit
-                    />
-                </div>
-            </div>
-            <div class="divCart">
-                <div :class="{imgCartActive: cartData && cartData.length > 0, imgCart:!cartData || cartData.length<1}"></div>
-                <div :class="{divGoodsNum:1===1, moreGoods:cartData && cartData.length > 99}" v-if="cartData && cartData.length > 0">{{ goodsNum }}</div>
-                <div class="divNum">
-                    <span>￥</span>
-                    <span>{{goodsPrice}}</span>
-                </div>
-                <div class="divPrice"></div>
-                <div :class="{btnSubmitActive: cartData && cartData.length > 0, btnSubmit:!cartData || cartData.length<1}" @click="goToPaySuccess">去支付</div>
-              </div>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui">
+    <title>中餐餐厅</title>
+    <link rel="icon" href="./../images/favico.ico">
+    <!--不同屏幕尺寸根字体设置-->
+    <script src="./../js/base.js"></script>
+    <!--element-ui的样式-->
+    <link rel="stylesheet" href="../../backend/plugins/element-ui/index.css"/>
+    <!--引入vant样式-->
+    <link rel="stylesheet" href="../styles/vant.min.css"/>
+    <!-- 引入样式  -->
+    <link rel="stylesheet" href="../styles/index.css"/>
+    <!--本页面内容的样式-->
+    <link rel="stylesheet" href="./../styles/add-order.css"/>
+    <link href="../styles/shop-detail.css" rel="stylesheet">
+</head>
+<body>
+<div id="add_order" class="app">
+    <div class="divHead">
+        <div class="divTitle">
+            <i class="el-icon-arrow-left" @click="goBack"></i>中餐餐厅
         </div>
-        <!-- 开发环境版本，包含了有帮助的命令行警告 -->
-        <script src="../../backend/plugins/vue/vue.js"></script>
-        <!-- 引入组件库 -->
-        <script src="../../backend/plugins/element-ui/index.js"></script>
-        <!-- 引入vant样式 -->
-        <script src="./../js/vant.min.js"></script>      
-        <script src="./../api/address.js"></script>
-        <!-- 引入axios -->
-        <script src="../../backend/plugins/axios/axios.min.js"></script>
-        <script src="./../js/request.js"></script>
-        <script src="./../js/common.js"></script>
-        <script src="./../api/main.js"></script>
-        <script src="./../api/order.js"></script>
-        <script>
-            new Vue({
-                el:"#add_order",
-                data(){
-                    return {
-                        address:{
-                            phone:'',//手机号
-                            consignee:'',//姓名
-                            detail:'',//详细地址
-                            sex:'1',
-                            id:undefined
-                        },
-                        finishTime:'',//送达时间
-                        cartData:[],
-                        note:''//备注信息
-                    }
+    </div>
+    <div class="divContent">
+        <div class="divAddress">
+            <div @click="toAddressPage">
+                <div class="address">{{address.detail}}</div>
+                <div class="name">
+                    <span>{{address.consignee}}{{address.sex === '1' ? '先生' : '女士'}}</span>
+                    <span>{{address.phone}}</span>
+                </div>
+                <i class="el-icon-arrow-right"></i>
+            </div>
+            <div class="divSplit"></div>
+            <div class="divFinishTime">预计{{finishTime}}送达</div>
+        </div>
+        <div class="order">
+            <div class="title">订单明细</div>
+            <div class="divSplit"></div>
+            <div class="itemList">
+                <div class="item" v-for="(item,index) in cartData" :key="index">
+                    <el-image :src="imgPathConvert(item.image)">
+                        <div slot="error" class="image-slot">
+                            <img src="./../images/noImg.png"/>
+                        </div>
+                    </el-image>
+                    <div class="desc">
+                        <div class="name">{{item.name}}</div>
+                        <div class="numPrice">
+                            <span class="num">x{{item.number}}</span>
+                            <div class="price">
+                                <span class="spanMoney">￥</span>{{item.amount}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="order">
+            <div class="title">可用优惠券</div>
+            <div class="divSplit"></div>
+            <div class="itemList">
+                <div class="voucher-box" style="font-size:10em;" v-if="vouchers" v-for=" (v,index) in vouchers"
+                     :key="index"> <!-- v-if="!isEnd(v)" -->
+                    <div class="voucher-circle">
+                        <div class="voucher-b"></div>
+                        <div class="voucher-b"></div>
+                        <div class="voucher-b"></div>
+                    </div>
+                    <div class="voucher-left">
+                        <div class="voucher-title">{{v.title}}</div>
+                        <div class="voucher-subtitle">{{v.subTitle}}</div>
+                        <div class="voucher-price">
+                            <div>￥ {{formatPrice(v.payValue)}}</div>
+                            <span>{{(v.payValue * 10) / v.actualValue}}折</span></div>
+                    </div>
+                    <div class="voucher-right">
+                        <input type="radio" v-model="voucherId" :value="v.id" @click="goodsPrice" :disabled="!inable(v.actualValue)">
+
+                        <!--                        <input type="radio" v-model="payValue" :value="formatPrice(v.payValue)"-->
+<!--                               @click="goodsPrice" :disabled="!inable(v.actualValue)">-->
+                        <!--                                        <el-checkbox :disabled = "!inable(v.actualValue)" v-model="v.id" :change="show(v.id)"></el-checkbox>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="note">
+            <div class="title">备注</div>
+            <van-field
+                    v-model="note"
+                    rows="2"
+                    autosize
+                    type="textarea"
+                    maxlength="50"
+                    placeholder="请输入您需要备注的信息"
+                    show-word-limit
+            />
+        </div>
+    </div>
+    <div class="divCart">
+        <div :class="{imgCartActive: cartData && cartData.length > 0, imgCart:!cartData || cartData.length<1}"></div>
+        <div :class="{divGoodsNum:1===1, moreGoods:cartData && cartData.length > 99}"
+             v-if="cartData && cartData.length > 0">{{ goodsNum }}
+        </div>
+        <div class="divNum">
+            <span>￥</span>
+            <span>{{ goodsPrice }}</span>
+        </div>
+        <div class="divPrice"></div>
+        <div :class="{btnSubmitActive: cartData && cartData.length > 0, btnSubmit:!cartData || cartData.length<1}"
+             @click="goToPaySuccess">去支付
+        </div>
+    </div>
+</div>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../backend/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../backend/plugins/element-ui/index.js"></script>
+<!-- 引入vant样式 -->
+<script src="./../js/vant.min.js"></script>
+<script src="./../api/address.js"></script>
+<!-- 引入axios -->
+<script src="../../backend/plugins/axios/axios.min.js"></script>
+<script src="./../js/request.js"></script>
+<script src="./../js/common.js"></script>
+<script src="./../api/main.js"></script>
+<script src="./../api/order.js"></script>
+<script src="./../api/voucher.js"></script>
+<script>
+    new Vue({
+        el: "#add_order",
+        data() {
+            return {
+                address: {
+                    phone: '',//手机号
+                    consignee: '',//姓名
+                    detail: '',//详细地址
+                    sex: '1',
+                    id: undefined
                 },
-                computed:{
-                    goodsNum(){
-                        let num = 0
-                        this.cartData.forEach(item=>{
-                            num += item.number 
-                        })
-                        if(num <99){
-                            return num
-                        }else{
-                            return '99+'
-                        }
-                    },
-                    goodsPrice(){
-                    let price = 0
-                    this.cartData.forEach(item=>{
-                        price += (item.number * item.amount)
-                    })
-                    return price
-                    }
-                },
-                created(){
-                    this.initData()
-                },
-                mounted(){},
-                methods:{
-                    goBack(){
-                        history.go(-1)
-                    },
-                    initData(){
-                        //获取默认的地址
-                        this.defaultAddress()
-                        //获取购物车的商品
-                        this.getCartData()
-                    },
-                    //获取默认地址
-                    async defaultAddress(){
-                        const res = await  getDefaultAddressApi()
-                        if(res.code === 1){
-                           this.address = res.data
-                           this.getFinishTime()
-                        }else{
-                            window.requestAnimationFrame(()=>{
-                                window.location.href = '/front/page/address-edit.html'
-                            })
-                        }
-                    },
-                    //获取送达时间
-                    getFinishTime(){
-                        let now = new Date()
-                        let hour = now.getHours() +1
-                        let minute = now.getMinutes()
-                        if(hour.toString().length <2){
-                            hour = '0' + hour
-                        }
-                        if(minute.toString().length <2){
-                            minute = '0' + minute
-                        }
-                        this.finishTime = hour + ':' + minute
-                    },
-                    toAddressPage(){
-                        window.requestAnimationFrame(()=>{
-                            window.location.href = '/front/page/address.html'
-                        })
-                    },
-                    //获取购物车数据
-                    async getCartData(){
-                        const res = await cartListApi({})
-                        if(res.code === 1){
-                            this.cartData = res.data
-                        }else{
-                            this.$notify({ type:'warning', message:res.msg});
-                        }
-                    },
-                    async goToPaySuccess(){
-                        const params = {
-                            remark:this.note,
-                            payMethod:1,
-                            addressBookId:this.address.id,
-                            voucherId:"1779411052968738817"
-                        }
-                        const res = await addOrderApi(params)
-                        if(res.code === 1){
-                            window.requestAnimationFrame(()=>{
-                                window.location.replace('/front/page/pay-success.html')
-                            })
-                        }else{
-                            this.$notify({ type:'warning', message:res.msg});
-                        }
-                    },
-                    //网络图片路径转换
-                    imgPathConvert(path){
-                        return imgPath(path)
-                    },
+                price: '',
+                vouchers: [],
+                payValue: 0,
+                voucherId: '',
+                finishTime: '',//送达时间
+                cartData: [],
+                note: ''//备注信息
+            }
+        },
+        computed: {
+            goodsNum() {
+                let num = 0
+                this.cartData.forEach(item => {
+                    num += item.number
+                })
+                if (num < 99) {
+                    return num
+                } else {
+                    return '99+'
                 }
-            })
-            </script>
-        </body>
-    </html>
+            },
+
+            // goodsPrice() {
+            //     let price = 0
+            //     this.cartData.forEach(item => {
+            //         price += (item.number * item.amount)
+            //     })
+            //
+            //     price -= this.payValue
+            //
+            //     this.price = price
+            //
+            //     console.log(this.payValue)
+            //     console.log(this.price)
+            //     return price
+            // },
+
+            goodsPrice() {
+                if (this.vouchers.length > 0) {
+                    this.vouchers.forEach(v => {
+                        if(v.id === this.voucherId){
+                            this.payValue = this.formatPrice(v.payValue)
+                        }
+                    })
+                }
+
+                let price = 0
+                this.cartData.forEach(item => {
+                    price += (item.number * item.amount)
+                })
+
+                price -= this.payValue
+
+                this.price = price
+
+                return price
+            },
+
+        },
+        created() {
+            this.initData()
+        },
+        mounted() {
+        },
+        methods: {
+            countGoodsPrice(payValue) {
+                let price = 0
+                this.cartData.forEach(item => {
+                    price += (item.number * item.amount)
+                })
+
+                price -= payValue
+
+                this.price = price
+
+                return price
+            },
+
+            confirmId(id) {
+                return id === this.voucherId
+            },
+
+            show(id) {
+                this.voucherId = id;
+            },
+
+            inable(actualValue) {
+                return this.formatPrice(actualValue) <= this.goodsPrice
+            },
+            goBack() {
+                history.go(-1)
+            },
+            initData() {
+                //获取默认的地址
+                this.defaultAddress()
+                //获取购物车的商品
+                this.getCartData()
+                //获取优惠券
+                this.getUserVouchers()
+            },
+            //获取默认地址
+            async defaultAddress() {
+                const res = await getDefaultAddressApi()
+                if (res.code === 1) {
+                    this.address = res.data
+                    this.getFinishTime()
+                } else {
+                    window.requestAnimationFrame(() => {
+                        window.location.href = '/front/page/address-edit.html'
+                    })
+                }
+            },
+
+            // // 获取优惠券
+            // async getVouchers() {
+            //     const res = await getVoucherApi();
+            //     if (res.code === 1) {
+            //         this.vouchers = res.data;
+            //         console.log(this.vouchers)
+            //     } else {
+            //         this.$message.error(res.msg)
+            //     }
+            // },
+
+            // 获取用户拥有的优惠券
+            async getUserVouchers() {
+                const res = await getUserVoucher();
+                if (res.code === 1) {
+                    this.vouchers = res.data;
+                } else {
+                    this.$message.error(res.msg)
+                }
+            },
+
+            //获取送达时间
+            getFinishTime() {
+                let now = new Date()
+                let hour = now.getHours() + 1
+                let minute = now.getMinutes()
+                if (hour.toString().length < 2) {
+                    hour = '0' + hour
+                }
+                if (minute.toString().length < 2) {
+                    minute = '0' + minute
+                }
+                this.finishTime = hour + ':' + minute
+            },
+
+            toAddressPage() {
+                window.requestAnimationFrame(() => {
+                    window.location.href = '/front/page/address.html'
+                })
+            },
+
+            //获取购物车数据
+            async getCartData() {
+                const res = await cartListApi({})
+                if (res.code === 1) {
+                    this.cartData = res.data
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+
+            async goToPaySuccess() {
+                const params = {
+                    remark: this.note,
+                    payMethod: 1,
+                    addressBookId: this.address.id,
+                    voucherId: this.voucherId
+                }
+
+
+                const res = await addOrderApi(params)
+                if (res.code === 1) {
+                    window.requestAnimationFrame(() => {
+                        window.location.replace('/front/page/pay-success.html')
+                    })
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            //网络图片路径转换
+            imgPathConvert(path) {
+                return imgPath(path)
+            },
+
+            formatPrice(val) {
+                if (typeof val === 'string') {
+                    if (isNaN(val)) {
+                        return null;
+                    }
+                    // 价格转为整数
+                    const index = val.lastIndexOf(".");
+                    let p = "";
+                    if (index < 0) {
+                        // 无小数
+                        p = val + "00";
+                    } else if (index === p.length - 2) {
+                        // 1位小数
+                        p = val.replace("\.", "") + "0";
+                    } else {
+                        // 2位小数
+                        p = val.replace("\.", "")
+                    }
+                    return parseInt(p);
+                } else if (typeof val === 'number') {
+                    if (!val) {
+                        return null;
+                    }
+                    const s = val + '';
+                    if (s.length === 0) {
+                        return "0.00";
+                    }
+                    if (s.length === 1) {
+                        return "0.0" + val;
+                    }
+                    if (s.length === 2) {
+                        return "0." + val;
+                    }
+                    const i = s.indexOf(".");
+                    if (i < 0) {
+                        return s.substring(0, s.length - 2) + "." + s.substring(s.length - 2)
+                    }
+                    const num = s.substring(0, i) + s.substring(i + 1);
+                    if (i === 1) {
+                        // 1位整数
+                        return "0.0" + num;
+                    }
+                    if (i === 2) {
+                        return "0." + num;
+                    }
+                    if (i > 2) {
+                        return num.substring(0, i - 2) + "." + num.substring(i - 2)
+                    }
+                }
+            }
+        }
+    })
+</script>
+</body>
+</html>

@@ -13,7 +13,9 @@ public interface VoucherService extends IService<Voucher> {
 
     R<Page<Voucher>> getVoucherList(int page, int pageSize);
 
-    R<List<Voucher>> getUserVoucer();
+    R<List<Voucher>> getVoucer();
 
     R<String> updateStatus(Long id, Integer status);
+
+    R<List<Voucher>> getUserVoucer();
 }

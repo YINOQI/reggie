@@ -9,7 +9,9 @@ import java.util.List;
 public interface ShoppingCartService extends IService<ShoppingCart> {
     R<ShoppingCart> add(ShoppingCart shoppingCart);
 
-    R<List<ShoppingCart>> listShoppingCart();
+    List<ShoppingCart> listShoppingCart();
 
     R<String> clear();
+
+    void removeDish(Long dishId);
 }

@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface VoucherOrderService extends IService<VoucherOrder> {
     R<List<VoucherOrder>> getVoucherOrder();
+    List<Long> getVoucherIds();
 }

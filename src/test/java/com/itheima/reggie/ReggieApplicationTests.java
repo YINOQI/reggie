@@ -3,6 +3,7 @@ package com.itheima.reggie;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.controller.ShoppingCartController;
 import com.itheima.reggie.entity.ShoppingCart;
+import com.itheima.reggie.mapper.ScheduledMapper;
 import com.itheima.reggie.service.ShoppingCartService;
 import com.itheima.reggie.utils.BaseContext;
 import org.junit.Before;
@@ -11,6 +12,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
@@ -27,12 +29,20 @@ public class ReggieApplicationTests {
     @Mock
     private ShoppingCartService shoppingCartService;
 
+    @Mock
+    private ScheduledMapper scheduledMapper;
+
     @Before
     public void init(){
         //模拟当前用户已登录
         BaseContext.setCurrentId(1L);
     }
 
+    @Test
+    public void update(){
+        scheduledMapper.statusUpdate();
+        System.out.println(scheduledMapper.select(1L));
+    }
     @Test
     public void testAddExistingShoppingCart() {
         // TC-001: 购物车中已存在相同的菜品，更新数量

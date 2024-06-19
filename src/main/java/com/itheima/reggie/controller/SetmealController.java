@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.SetmealDto;
 import com.itheima.reggie.entity.Setmeal;
-import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.SetmealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +30,7 @@ public class SetmealController {
      * @param id
      * @return
      */
-    @GetMapping("/{id}")
+    @GetMapping("/dish/{id}")
     public R<SetmealDto> getSetmealById(@PathVariable Long id){
         return setmealService.getSetmealById(id);
     }
@@ -83,4 +82,11 @@ public class SetmealController {
     public R<List<Setmeal>> list(Setmeal setmeal){
         return setmealService.listSetmeal(setmeal);
     }
+
+    @GetMapping("/{id}")
+    public R<SetmealDto> getSetmeal(@PathVariable("id") Long id){
+        return setmealService.getSetmealById(id);
+    }
+//
+
 }

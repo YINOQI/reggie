@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("shoppingCart")
@@ -31,7 +32,8 @@ public class ShoppingCartController {
      */
     @GetMapping("/list")
     public R<List<ShoppingCart>> listShoppingCart(){
-        return shoppingCartService.listShoppingCart();
+
+        return R.success(shoppingCartService.listShoppingCart());
     }
 
     /**
@@ -41,5 +43,15 @@ public class ShoppingCartController {
     @DeleteMapping("/clean")
     public R<String> clean(){
         return shoppingCartService.clear();
+    }
+
+    @PostMapping("/sub")
+    public R<String> sub(@RequestBody Map<String,String> params){
+        Long id = Long.parseLong(params.get("dishId"));
+        if (id == null) {
+            return R.error("参数错误");
+        }
+        shoppingCartService.removeDish(id);
+        return R.success("清除商品成功");
     }
 }

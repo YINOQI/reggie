@@ -81,6 +81,11 @@ public class DishController {
         return dishService.listDish(dish);
     }
 
+    @DeleteMapping
+    public R<String> delete(Long ids){
+        dishService.remove(ids);
+        return R.success("");
+    }
 }
 
 

@@ -24,9 +24,15 @@ public class VoucherController {
     private VoucherOrderService voucherOrderService;
 
     @GetMapping
+    public R<List<Voucher>> getVoucher(){
+        return voucherService.getVoucer();
+    }
+
+    @GetMapping("/user-voucher")
     public R<List<Voucher>> getUserVoucher(){
         return voucherService.getUserVoucer();
     }
+
 
     @GetMapping("/voucherList")
     public R<Page<Voucher>> getVoucherList(int page,int pageSize){

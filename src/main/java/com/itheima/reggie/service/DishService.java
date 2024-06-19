@@ -20,4 +20,6 @@ public interface DishService extends IService<Dish> {
     R<Page<DishDto>> getDishPage(int page, int pageSize, String name);
 
     R<List<DishDto>> listDish(Dish dish);
+
+    void remove(Long ids);
 }
